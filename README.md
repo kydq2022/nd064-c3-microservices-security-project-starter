@@ -1,21 +1,214 @@
-### Background
-Security is a highly dynamic topic with ever changing threats and priorities. Newsworthy topics ranging from fortune 500 companies like [Garmin](https://www.wired.com/story/garmin-ransomware-hack-warning) paying $10 million in ransom for ransomware attacks to supply chain attacks such as [Lapsus$](https://www.theverge.com/2022/4/20/23034360/okta-lapsus-hack-investigation-breach-25-minutes) are ever-present. 
+# Prerequisites
+```shell
 
-Security is becoming harder for engienering teams as the velocity of service deployments is accelerating. The [Synopsis 2022 Open Source Security Risk Analysis Report](https://www.synopsys.com/content/dam/synopsys/sig-assets/reports/rep-ossra-2022.pdf) revealed that 78% of audited code bases was open source, and within those codebases, 81% contained at least one vulnerabiltiy, which creates risk if left unpatched. With "shifting right", the industry has doubled down on incorporating security validations into each step of the build -> from the local dev environemnt -> to linters commit and pull request review -> to ci/cd checks during the deployment process, incorporating check into nominal deployment process are vital to identify security defects before they hit production.
+# Update git
+sudo add-apt-repository -y ppa:git-core/ppa
 
-Your company CTO is worried about what your engineering team is doing to harden and monitor the company's new microservices against malicious threat actors and payloads. You’ve completed the exercies in the course and have a baseline understanding of how to approach this. In response to the CTOs concerns, students will threat model and build a hardened  microservices stack based on what they learned from the exercises.
+sudo apt-get update
 
-### Goal 
-You will be presented with the challenge to build a secure microservice stack, threat modeling and hardening the container image, run-time environment and application itself. For purposes of the project, you will be instructed to use a secure base opensuse image, covering considerations for the importance of using trustworthy base images and verifing the baselein. You will be provided with instructions to build, harden, ship and run an environment analogous to the company's new microservice, simplified for project purposes. In the project you will define and build a new environment from the ground-up. 
+sudo apt-get install git -y
 
-In a real-world scenario, you may have an existing envrionment that needs to be hardened or it may decided to re-build parts or all net-new, regardless, the tools and techniques in the project are directly applicable. The beauty of microservices vs a monolith architecture is that all core components (image, container, run-time, application) are abstracted allowing for isolation boundaries and iterative development. In the real-world, you could chose to harden and redeploy all base-images as one project phase and tackle docker container security, kubernetes hardening and the software composition anaylsis, as individual project phases. 
+git --version
 
-The best approach is to incorporate these requirements and security hardening into the build and deploy processes. In an enterprise setting, much of this can be enforced with linters on commit and PR review and security units test via CI/CD prior to deployment. Hardening the base-image and incorporating security checks into the CI/CD is beyond the scope of this project and course, however please reference the [additional considerations](https://github.com/udacity/nd064-c3-Microservices-Security-project-starter/tree/master/starter#additional-considerations) section for more on this. 
+# Docker version
+sudo docker --version
 
-For the project, once the microservice stack is hardened and provisioned, we will configure [sysdig Falco](https://github.com/falcosecurity/falco) to perform run-time monitoring on the node, sending logs to a Grafana node for visualization. To demonstrate to the CTO that the company can respond to a real security event, you will then simulate a [tabletop cyber exercise](https://www.tripwire.com/state-of-security/security-data-protection/everything-you-need-to-know-about-cyber-crisis-tabletop-exercises/) by running a script to introduce an unknown binary from the starter code that will intentionally disrupt the environment.  
+# Python version
+python --version
 
-No stress, you have tools, security engineering and security incident response knowledge to respond :) Your goal will be to use Falco events visualized in Grafana to determine what the unknown binary is, contain and remediate the environment, write a post-mortem incident response report and present it to the CTO. There will be a few hidden easter eggs, see if you can find them for extra credit! 
+```
 
-### Project Instructions
+# Docker bench
+```shell
 
-Follow the steps/instructions in the Udacity classroom to complete and submit the project.
+git clone https://github.com/docker/docker-bench-security.git
+
+cd docker-bench-security
+
+sudo ./docker-bench-security.sh
+
+```
+![Alt text](submissions/suse_docker_environment_out_of_box.png)
+
+## Kube hardened
+```shell
+# [WARN] 2.15 - Ensure live restore is enabled (Scored)
+# [WARN] 2.16 - Ensure Userland Proxy is Disabled (Scored)
+# [WARN] 2.14 - Ensure containers are restricted from acquiring new privileges (Scored)
+
+cat /etc/docker/daemon.json
+
+{
+    "live-restore": true, 
+    "userland-proxy": false, 
+    "no-new-privileges": true 
+}
+
+```
+![Alt text](submissions/suse_docker_environment_hardened.png)
+
+
+# Kube bench
+```shell
+
+git clone https://github.com/aquasecurity/kube-bench.git
+
+cd kube-bench/
+
+kubectl apply -f job.yaml
+
+kubectl get pods
+NAME               READY   STATUS      RESTARTS   AGE
+kube-bench-4cmrp   0/1     Completed   0          14h
+
+kubectl logs kube-bench-4cmrp
+
+```
+![Alt text](submissions/kube_cluster_out_of_box.png)
+
+## Kube hardening
+
+https://docs.k3s.io/security/hardening-guide
+
+### Pod Security
+
+```shell
+sudo cat /var/lib/rancher/k3s/server/psa.yaml
+apiVersion: apiserver.config.k8s.io/v1
+kind: AdmissionConfiguration
+plugins:
+- name: PodSecurity
+  configuration:
+    apiVersion: pod-security.admission.config.k8s.io/v1beta1
+    kind: PodSecurityConfiguration
+    defaults:
+      enforce: "restricted"
+      enforce-version: "latest"
+      audit: "restricted"
+      audit-version: "latest"
+      warn: "restricted"
+      warn-version: "latest"
+    exemptions:
+      usernames: []
+      runtimeClasses: []
+      namespaces: [kube-system, cis-operator-system]
+```
+
+### NetworkPolicies
+- The Backend (BE) namespace is configured to only allow incoming network access from the Frontend (FE) namespace specifically on ports 80 and 443.
+
+- The Database (DB) namespace enforces a more granular access control policy by permitting inbound network traffic solely from the Backend (BE) namespace.
+
+```shell
+# allow-fe-to-be.yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-fe-to-be
+  namespace: be
+spec:
+  podSelector:
+    matchLabels:
+      app: backend
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: fe
+  ports:
+  - protocol: TCP
+    port: 80
+# allow-be-to-db.yaml
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-be-to-db
+  namespace: db
+spec:
+  podSelector:
+    matchLabels:
+      app: database
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: be
+
+
+```
+### API Server audit configuration
+```shell
+sudo ls -la /var/lib/rancher/k3s/server/logs
+udo tail /var/lib/rancher/k3s/server/logs/audit.log
+{"kind":"Event","apiVersion":"audit.k8s.io/v1","level":"Metadata","auditID":"63b66702-c5ce-48b4-a6e3-d4359cc0bfcc","stage":"ResponseStarted","requestURI":"/apis/storage.k8s.io/v1/csidrivers?
+
+```
+
+![Alt text](submissions/kube_cluster_hardened.png)
+
+# Grype, Harden and Deploy the Flask App
+
+https://github.com/anchore/grype
+
+```shell
+
+curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sudo sh -s -- -b /usr/local/bin
+
+sudo grype vuln_app-sqli
+
+```
+
+![Alt text](submissions/grype_app_out_of_box.png)
+
+## Hardened
+![Alt text](submissions/grype_app_hardended.png)
+
+# Falco
+```shell
+
+helm repo add falcosecurity https://falcosecurity.github.io/charts
+helm repo update
+
+kubectl create namespace falco
+
+# helm install 
+helm install falco falcosecurity/falco -n falco --set driver.kind=modern-bpf --set tty=true --set collectors.containerd.enabled=true --set collectors.containerd.socket=/run/k3s/containerd/containerd.sock --set falcosidekick.enabled=true --set auditLog.enabled=true --set serviceMonitor.enabled=true
+
+
+kubectl get events --sort-by=.metadata.creationTimestamp -n falco
+
+kubectl get pods,svc -n falco
+NAME              READY   STATUS    RESTARTS   AGE
+pod/falco-nnxqx   2/2     Running   0          8m14s
+
+# Simuate
+kubectl exec -it alpine -- sh -c "ls -la"
+
+kubectl logs -l app.kubernetes.io/name=falco -n falco -c falco | grep Notice
+
+```
+![Alt text](submissions/kube_pods_screenshot.png)
+
+## Configure the Prometheus Operator and Grafana.
+```shell
+#  Install Prometheus Operator
+helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+helm repo update
+
+kubectl create namespace monitoring
+
+helm install prometheus-operator prometheus-community/kube-prometheus-stack -n monitoring
+
+kubectl get pods,svc -n monitoring
+
+# Install Grafana
+helm install grafana prometheus-community/grafana -n monitoring
+kubectl port-forward service/grafana -n monitoring 3000:80
+
+kubectl get pods,svc -n monitoring
+
+# ServiceMonitor
+kubectl apply -f deployment/falco-falcosidekick-monitor.yaml 
+```
+
+![Alt text](submissions/falco_grafana_screenshot.png)
