@@ -1,0 +1,33 @@
+Incident Response Report
+
+Date: December 27, 2023
+
+Incident Summary:
+On December 27, 2023, at approximately 12:30 PM, a security incident occurred in our Kubernetes cluster. The incident involved the intentional execution of a suspicious command using the payload.sh script. This led to the introduction of malicious containers running crypto mining software and potentially exploiting security vulnerabilities in legacy Docker images.
+
+Timeline of Events:
+2. **December 27, 2023, 12:35 PM:** Suspicious command introduced into the Kubernetes cluster.
+3. **December 27, 2023, 12:40 PM:** Containers instantiated with legacy Docker images, triggering crypto mining activities.
+4. **December 27, 2023, 12:45 PM:** Detection of the incident by our security monitoring tools, including Falco.
+
+Incident Analysis:
+The incident involved the intentional deployment of containers with known security issues, posing risks such as crypto mining and potential exploitation of vulnerabilities. Our security monitoring tools, including Falco, played a crucial role in detecting and alerting us to the malicious activities promptly.
+
+Response Actions:
+1. **Immediate containment:** The affected containers were isolated and shut down promptly to prevent further impact.
+2. **Analysis and investigation:** Our security team conducted a thorough investigation to assess the extent of the incident, identify affected resources, and understand the methods used by the attacker.
+3. **Patch and remediation:** Identified vulnerabilities in the Docker images were addressed, and necessary patches were applied to prevent similar incidents in the future.
+4. **Communication:** Internal communication was initiated to inform relevant stakeholders about the incident, its impact, and the steps taken for remediation.
+
+Preventive Measures:
+1. **Regular patching:** Emphasize the importance of keeping all systems, including host systems, up-to-date with the latest security patches.
+2. **Security awareness training:** Enhance security awareness training to educate users on the risks associated with executing unknown scripts or introducing unverified workloads into the cluster.
+3. **Continuous monitoring:** Strengthen continuous monitoring mechanisms, ensuring rapid detection and response to suspicious activities within the cluster.
+
+Recommendations:
+1. **Review and update security policies:** Regularly review and update security policies to align with evolving threats and best practices.
+2. **Incident response drills:** Conduct regular incident response drills to ensure the readiness of the security team in handling similar incidents effectively.
+3. **Ongoing threat intelligence:** Stay updated on emerging threats and vulnerabilities to proactively implement preventive measures.
+
+Conclusion:
+The incident has been successfully contained and remediated, thanks to our proactive monitoring tools and the swift response of the security team. The identified preventive measures and recommendations aim to fortify our security posture and reduce the likelihood of similar incidents in the future.
