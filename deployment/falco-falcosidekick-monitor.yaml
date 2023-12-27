@@ -1,0 +1,18 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: falco-falcosidekick-servicemonitor
+  namespace: falco
+  labels:
+    release: kube-prometheus-stack-55.5.0
+spec:
+  endpoints:
+    - port: http-web
+    - path: /metrics
+  namespaceSelector:
+    matchNames:
+      - falco
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: falcosidekick
+
