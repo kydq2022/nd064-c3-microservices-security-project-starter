@@ -43,6 +43,7 @@
    - *Mitigation:* Implement resource quotas, use PodDisruptionBudgets, and monitor for abnormal resource usage to prevent and mitigate denial-of-service attacks.
 
 # Docker Bench Security Findings:
+![Alt text](./suse_docker_environment_out_of_box.png)
 
 ## 2.15 - Ensure live restore is enabled (Scored)
 - **Issue:** Live restore can pose security risks, allowing unauthorized access to running containers during daemon restarts.
