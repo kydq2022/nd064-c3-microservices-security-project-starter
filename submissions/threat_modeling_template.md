@@ -42,34 +42,18 @@
    - *Threat:* Malicious users may attempt to launch resource-intensive pods or disrupt existing pods, leading to denial of service or service degradation.
    - *Mitigation:* Implement resource quotas, use PodDisruptionBudgets, and monitor for abnormal resource usage to prevent and mitigate denial-of-service attacks.
 
-### **Docker-bench Run Results and Analysis:**
+# Docker Bench Security Findings:
 
-From the Docker-bench run results, let's select three findings to harden based on the identified attack surface areas:
+## 2.15 - Ensure live restore is enabled (Scored)
+- **Issue:** Live restore can pose security risks, allowing unauthorized access to running containers during daemon restarts.
+- **Recommendation:** Consider the security implications and either enable or disable live restore based on your specific use case and security requirements.
 
-1. **Finding: 5.15 - "Do not use the 'on-failure' restart policy":**
-   - *Harden based on:* Denial of Service (Resource Exhaustion).
-   - *Mitigation:* Configure containers to have a proper restart policy based on business requirements. Avoid using the 'on-failure' restart policy, as it may lead to resource exhaustion in case of frequent failures.
+## 2.16 - Ensure Userland Proxy is Disabled (Scored)
+- **Issue:** Userland proxy can introduce security vulnerabilities; disabling it is recommended for improved security.
+- **Recommendation:** Ensure that Userland Proxy is disabled to mitigate potential security risks.
 
-2. **Finding: 5.18 - "Do not run SSH within containers":**
-   - *Harden based on:* Spoofing Identity (Unauthorized Access to Docker Host).
-   - *Mitigation:* Remove SSH from containers and use more secure methods for accessing and managing containers, such as Docker exec or Kubernetes exec.
+## 2.14 - Ensure containers are restricted from acquiring new privileges (Scored)
+- **Issue:** Allowing containers to acquire new privileges can lead to security vulnerabilities and compromise the host system.
+- **Recommendation:** Review and restrict container configurations to prevent them from acquiring new privileges, enhancing overall security.
 
-3. **Finding: 5.26 - "Ensure that the container is restricted from acquiring additional privileges":**
-   - *Harden based on:* Tampering with Data (Container Integrity).
-   - *Mitigation:* Review and modify container configurations to restrict unnecessary privileges, preventing potential tampering and ensuring container integrity. Use the principle of least privilege.
-
-### **Docker-bench Run Results and Analysis:**
-
-From the Docker-bench run results, let's focus on findings related to daemon configurations:
-
-1. **Finding: 2.14 - "Ensure operations on legacy registry (v1) are Disabled":**
-   - *Harden based on:* Registry Security.
-   - *Mitigation:* Ensure that Docker is configured to use v2 registries, and disable any legacy (v1) registry operations.
-
-2. **Finding: 2.15 - "Ensure that daemon.json file permissions are set to 644 or more restrictive":**
-   - *Harden based on:* Configuration File Security.
-   - *Mitigation:* Set the correct file permissions for daemon.json to 644 or more restrictive to ensure only authorized users can read or modify the configuration.
-
-3. **Finding: 2.16 - "Ensure that the daemon.json file ownership is set to root:root":**
-   - *Harden based on:* Configuration File Security.
-   - *Mitigation:* Ensure that the ownership of daemon.json is set to root:root to restrict access to privileged users only.
+![Alt text](./suse_docker_environment_hardened.png)
