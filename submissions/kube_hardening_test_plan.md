@@ -1,19 +1,24 @@
-Test Environment Setup
+# Test Environment Setup
+
 - Set up a test environment resembling the production Kubernetes cluster.
 
-Hardening Changes
+# Hardening Changes
+
 - Implement hardening changes (e.g., RBAC, network policies) in the test environment.
 
-Functional Tests
+# Functional Tests
+
 - Verify basic Kubernetes functionalities and application deployment.
 
-Backup
+# Backup
+
 - Take a complete backup of the Kubernetes cluster and critical data.
 
-Rollback plan
+# Rollback Plan
+
 - Test the rollback plan to ensure a smooth return to the pre-hardening state.
 
-Goals:
+## Goals:
 
 - Confirm hardening doesn't disrupt normal operations.
 - Ensure a rollback plan is effective.
