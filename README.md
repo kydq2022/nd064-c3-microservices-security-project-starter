@@ -172,8 +172,9 @@ helm repo update
 kubectl create namespace falco
 
 # helm install 
-helm install falco falcosecurity/falco -n falco --set driver.kind=modern-bpf --set tty=true --set collectors.containerd.enabled=true --set collectors.containerd.socket=/run/k3s/containerd/containerd.sock --set falcosidekick.enabled=true --set auditLog.enabled=true --set serviceMonitor.enabled=true
+helm install falco falcosecurity/falco -n falco --set driver.kind=modern-bpf --set tty=true --set collectors.containerd.enabled=true --set collectors.containerd.socket=/run/k3s/containerd/containerd.sock --set falcosidekick.enabled=true --set auditLog.enabled=true --set falcosidekick.serviceMonitor.enabled=true --set falco.grpc.enabled=true --set falco.grpc_output.enabled=true --create-namespace
 
+helm install falco-exporter --namespace falco --set serviceMonitor.enabled=true falcosecurity/falco-exporter
 
 kubectl get events --sort-by=.metadata.creationTimestamp -n falco
 
@@ -182,9 +183,11 @@ NAME              READY   STATUS    RESTARTS   AGE
 pod/falco-nnxqx   2/2     Running   0          8m14s
 
 # Simuate
-kubectl exec -it alpine -- sh -c "ls -la"
+kubectl run alpine --image alpine -- sh -c "sleep infinity"
 
-kubectl logs -l app.kubernetes.io/name=falco -n falco -c falco | grep Notice
+kubectl exec -it alpine -- sh -c "cat /etc/shadow"
+
+kubectl logs -l app.kubernetes.io/name=falco -n falco -c falco | grep Warning
 
 ```
 ![Alt text](submissions/kube_pods_screenshot.png)
@@ -197,13 +200,7 @@ helm repo update
 
 kubectl create namespace monitoring
 
-helm install prometheus-operator prometheus-community/kube-prometheus-stack -n monitoring
-
-kubectl get pods,svc -n monitoring
-
-# Install Grafana
-helm install grafana prometheus-community/grafana -n monitoring
-kubectl port-forward service/grafana -n monitoring 3000:80
+helm install prometheus-operator prometheus-community/kube-prometheus-stack -n monitoring --create-namespace
 
 kubectl get pods,svc -n monitoring
 

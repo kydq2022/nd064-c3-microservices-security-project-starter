@@ -1,7 +1,7 @@
 apiVersion: monitoring.coreos.com/v1
 kind: ServiceMonitor
 metadata:
-  name: falco-falcosidekick-servicemonitor
+  name: falco-exporter-monitor
   namespace: falco
   labels:
     release: prometheus-operator
@@ -14,6 +14,6 @@ spec:
       - falco
   selector:
     matchLabels:
-      app.kubernetes.io/instance:  falco
-      app.kubernetes.io/name: falcosidekick
+      app.kubernetes.io/instance:  falco-exporter
+      app.kubernetes.io/name: falco-exporter
 
